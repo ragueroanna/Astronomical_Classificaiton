@@ -36,5 +36,40 @@ print('Predict value of class based on fields:', \
       fields.replace(',class','').replace(',',', '))
 
 #%% EDA
+df
+#conda create --name astro_env
+#conda activate astro_env
+#conda install astropy
+import astropy
+from astropy.io import fits
+from astropy.table import Table
 
+#%%
+with fits.open('spec-10000-57346-0001.fits') as hdul:
+    print(hdul.info())
+    print(hdul[1].header)
+    print(hdul[1].data)
+    # asn_table = Table(hdul[1].data)
+    # print(hdul[2].header)
+    # print(hdul[2].data)
+
+print(asn_table)
+
+#%%
+from astropy.wcs import WCS
+import matplotlib.pyplot as plt
+
+#%%
+with fits.open('spec-10000-57346-0001.fits') as hdu:
+    wcs = WCS(fobj=hdu[1], header=hdu[1].header)
+    
+#%%
+#      y1:y2,     x1:x2
+data[2290:2690, 280:680]
+#%%
+print(df.spec_obj_ID[1])
 #TODO
+
+for specobjid in df['spec_obj_id']:
+    # url.....specobjid
+    array.append()
