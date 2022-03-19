@@ -9,7 +9,7 @@ from os import chdir
 
 #folder containing repo root
 repo_path = r'C:\Users\Bob\Desktop\U\comp5360_final'
-#repo_path = r'C:\Users\roannarague\Documents\BMI_6106_Final'
+#repo_path = r'/Users/roannarague/Documents/BMI_6106_Final'
 
 chdir(repo_path)
 
@@ -53,23 +53,22 @@ with fits.open('spec-10000-57346-0001.fits') as hdul:
     # print(hdul[2].header)
     # print(hdul[2].data)
 
-print(asn_table)
+# print(asn_table)
 
 #%%
-from astropy.wcs import WCS
-import matplotlib.pyplot as plt
+# from astropy.wcs import WCS
+# import matplotlib.pyplot as plt
 
 #%%
-with fits.open('spec-10000-57346-0001.fits') as hdu:
-    wcs = WCS(fobj=hdu[1], header=hdu[1].header)
+# with fits.open('spec-10000-57346-0001.fits') as hdu:
+#     wcs = WCS(fobj=hdu[1], header=hdu[1].header)
     
 #%%
 #      y1:y2,     x1:x2
-data[2290:2690, 280:680]
-#%%
-print(df.spec_obj_ID[1])
-#TODO
+# data[2290:2690, 280:680]
+#
+# .... investigate web scraping or api/query
 
-for specobjid in df['spec_obj_id']:
-    # url.....specobjid
-    array.append()
+
+
+
