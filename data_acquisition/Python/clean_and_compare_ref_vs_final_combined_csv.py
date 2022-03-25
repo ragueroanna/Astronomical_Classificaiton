@@ -24,62 +24,55 @@ df = pd.read_csv('../../data/star_classification.csv')
 
 #%% clean up join of queries
 
-tdf = pd.read_csv('../../data/skyserver_querying/final_combined.csv', skiprows=1)
+def FreshValDf():    
+    t = pd.read_csv('../../data/skyserver_querying/final_combined.csv', skiprows=1)
+    
+    cols = t.columns.to_numpy()
+    # ['name', 'objID', 'ra', 'dec', 'run', 'rerun', 'camcol', 'field','type', ...
+    
+    # drop 'name' per artifact of query
+    t = t.drop('name', axis=1)
+    
+    cols = t.columns.to_numpy()
+    # ['objID', 'ra', 'dec', 'run', 'rerun', 'camcol', 'field','type', 'modelMag_u', 'modelMag_g', 'modelMag_r', 'modelMag_i', 'modelMag_z', 'specObjID', 'plate', 'mjd', 'fiberID']
+    
+    len(t.specObjID.unique())
+    #126598
+    
+    t.shape
+    #(128429, 19)
+    
+    t.shape[0] - len(t.specObjID.unique())
+    #1831
+    
+    val_cnts = t.specObjID.value_counts()
+    val_cnts.reset_index().iloc[0]
+    # index        specObjID
+    # specObjID            9
+    
+    #remove header rows (from joining queries)
+    rows_to_drop_idx = t[t['specObjID']=='specObjID'].index
+    t = t.drop(rows_to_drop_idx)
+    
+    #check ref and val data for matching spec_obj_IDs
+    
+    # all duplicated specObjID rows have sames values in all columns
+    t.duplicated().sum()
+    # 1823 (doesn't include first occurrence)
+    len(t) - t.duplicated().sum()
+    # 128420 - 1823 = 126597
 
-cols = tdf.columns.to_numpy()
-# ['name', 'objID', 'ra', 'dec', 'run', 'rerun', 'camcol', 'field','type', ...
+    t = t.drop(t.loc[t.duplicated()].index)
 
-# drop 'name' per artifact of query
-tdf = tdf.drop('name', axis=1)
+    len(t)
+    # 126597
+    len(t['specObjID'].unique())
+    # 126597
+    return t
 
-cols = tdf.columns.to_numpy()
-# ['objID', 'ra', 'dec', 'run', 'rerun', 'camcol', 'field','type', 'modelMag_u', 'modelMag_g', 'modelMag_r', 'modelMag_i', 'modelMag_z', 'specObjID', 'plate', 'mjd', 'fiberID']
 
-len(tdf.specObjID.unique())
-#126598
+tdf = FreshValDf()
 
-tdf.shape
-#(128429, 19)
-
-tdf.shape[0] - len(tdf.specObjID.unique())
-#1831
-
-val_cnts = tdf.specObjID.value_counts()
-val_cnts.reset_index().iloc[0]
-# index        specObjID
-# specObjID            9
-
-#remove header rows (from joining queries)
-rows_to_drop_idx = tdf[tdf['specObjID']=='specObjID'].index
-tdf = tdf.drop(rows_to_drop_idx)
-
-#%% check ref and val data for matching spec_obj_IDs
-
-#slow way of checking
-#
-# val_cnts = tdf.specObjID.value_counts()
-# dup_spec_obj_ids = val_cnts[tdf.specObjID.value_counts() > 1].index.to_numpy()
-
-# any_non_duplicates = False
-# for dup_spec_obj_id in dup_spec_obj_ids:
-#     dups = tdf[tdf['specObjID']==dup_spec_obj_id]
-#     for col in cols:
-#         if len(dups[col].unique()) > 1:
-#             any_non_duplicates = True
-
-# all duplicated specObjID rows have sames values in all columns
-
-tdf.duplicated().sum()
-# 1823 (doesn't include first occurrence)
-len(tdf) - tdf.duplicated().sum()
-# 128420 - 1823 = 126597
-
-tdf = tdf.drop(tdf.loc[tdf.duplicated()].index)
-
-len(tdf)
-# 126597
-len(tdf['specObjID'].unique())
-# 126597
 
 #%% subset ref and val data by matching spec_obj_IDs
 
@@ -159,44 +152,72 @@ prnt(df_val_subset)
 # object      fiberID                             171
 # object      z                             0.6347936
 
-#%% WiP
-df_val_subset['class'] = df_val_subset['type']
-df_val_subset['spec_obj_ID'] = df_val_subset['specObjID']
-df_val_subset['alpha'] = df_val_subset['ra'].astype(float)
-df_val_subset['delta'] = df_val_subset['dec'].astype(float)
-df_val_subset['u'] = df_val_subset['modelMag_u'].astype(float)
-df_val_subset['g'] = df_val_subset['modelMag_g'].astype(float)
-df_val_subset['r'] = df_val_subset['modelMag_r'].astype(float)
-df_val_subset['i'] = df_val_subset['modelMag_i'].astype(float)
-df_val_subset['z'] = df_val_subset['modelMag_z'].astype(float)
+#%% match up
+def ConvertToMatchRef(d):
+    d['redshift'] = d['z']
+    d['class'] = d['type']
+    d['spec_obj_ID'] = d['specObjID']
+    d['obj_ID'] = d['objID']
+    d['alpha'] = d['ra'].astype(float)
+    d['delta'] = d['dec'].astype(float)
+    d['u'] = d['modelMag_u'].astype(float)
+    d['g'] = d['modelMag_g'].astype(float)
+    d['r'] = d['modelMag_r'].astype(float)
+    d['i'] = d['modelMag_i'].astype(float)
+    d['z'] = d['modelMag_z'].astype(float)
+    
+    
+    d = d.drop(['type'], axis=1)
+    d = d.drop(['ra'], axis=1)
+    d = d.drop(['dec'], axis=1)
+    d = d.drop(['modelMag_u'], axis=1)
+    d = d.drop(['modelMag_g'], axis=1)
+    d = d.drop(['modelMag_r'], axis=1)
+    d = d.drop(['modelMag_i'], axis=1)
+    d = d.drop(['modelMag_z'], axis=1)
+    
+    d['run_ID'] = d['run'].astype(int)
+    d['rerun_ID'] = d['rerun'].astype(int)
+    d['cam_col'] = d['camcol'].astype(int)
+    d['field_ID'] = d['field'].astype(int)
+    d['plate'] = d['plate'].astype(int)
+    d['MJD'] = d['mjd'].astype(int)
+    d['fiber_ID'] = d['fiberID'].astype(int)
+    
+    d = d.drop(['objID','specObjID', 'run', 
+                'rerun', 'camcol', 'field', 
+                'mjd', 'fiberID'], axis=1)
+    return d
+    
+#%%
+df_val_subset = ConvertToMatchRef(df_val_subset)
 
-
-df_val_subset = df_val_subset.drop(['type'], axis=1)
-df_val_subset = df_val_subset.drop(['ra'], axis=1)
-df_val_subset = df_val_subset.drop(['dec'], axis=1)
-df_val_subset = df_val_subset.drop(['modelMag_u'], axis=1)
-df_val_subset = df_val_subset.drop(['modelMag_g'], axis=1)
-df_val_subset = df_val_subset.drop(['modelMag_r'], axis=1)
-df_val_subset = df_val_subset.drop(['modelMag_i'], axis=1)
-df_val_subset = df_val_subset.drop(['modelMag_z'], axis=1)
-
-df_val_subset['run_ID'] = df_val_subset['run'].astype(int)
-df_val_subset['rerun_ID'] = df_val_subset['rerun'].astype(int)
-df_val_subset['cam_col'] = df_val_subset['camcol'].astype(int)
-df_val_subset['field_ID'] = df_val_subset['field'].astype(int)
-df_val_subset['plate'] = df_val_subset['plate'].astype(int)
-df_val_subset['MJD'] = df_val_subset['mjd'].astype(int)
-df_val_subset['fiber_ID'] = df_val_subset['fiberID'].astype(int)
-
-
-df_val_subset = df_val_subset.drop(['run'], axis=1)
-df_val_subset = df_val_subset.drop(['rerun'], axis=1)
-df_val_subset = df_val_subset.drop(['camcol'], axis=1)
-df_val_subset = df_val_subset.drop(['field'], axis=1)
-df_val_subset = df_val_subset.drop(['mjd'], axis=1)
-df_val_subset = df_val_subset.drop(['fiberID'], axis=1)
+#%% check
 prnt(df_val_subset)
 prnt(df_ref_subset)
+print(df_val_subset.shape)
+print(df_ref_subset.shape)
+
+#%% write
+df_val_subset.to_csv('final_combined_clean_subset_matching_ref.csv')
+
+
+
+#%% NO QUASARS?
+df_val_subset['class'].value_counts()
+
+
 #%%
+print(df['class'].value_counts())
 
+#%% YUP, NO QUASARS!
 
+df_val = FreshValDf()
+df_val['type'].value_counts()
+df_val = df_val.drop(df_val[df_val.isna().any(axis=1)].index)
+ddd = ConvertToMatchRef(df_val)
+prnt(ddd)
+print(ddd['class'].value_counts())
+
+t = pd.read_csv('../../data/skyserver_querying/final_combined.csv', skiprows=1)
+t['type'].value_counts()
