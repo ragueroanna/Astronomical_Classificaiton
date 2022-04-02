@@ -1,2 +1,3 @@
 *.html
 *.fits
+*.ipynb_checkpoint*
